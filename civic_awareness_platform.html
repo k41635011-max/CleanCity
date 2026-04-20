@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicSense — Civic Awareness Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #22c55e;
+    --green-dark: #16a34a;
+    --green-light: #86efac;
+    --green-muted: #dcfce7;
+    --emerald: #10b981;
+    --teal: #0d9488;
+    --bg: #0a0f0d;
+    --bg2: #111a14;
+    --bg3: #162019;
+    --card: #1a2b1f;
+    --card2: #1f3326;
+    --border: #2d4a35;
+    --text: #e8f5ec;
+    --text2: #9dbfa8;
+    --text3: #6b9476;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position:fixed; left:0; top:0; bottom:0; width:240px;
+    background:var(--bg2); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100;
+    padding:0 0 16px 0;
+  }
+  .logo { padding:24px 20px 20px; border-bottom:1px solid var(--border); }
+  .logo-icon { width:36px; height:36px; background:var(--green); border-radius:10px;
+    display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:10px; }
+  .logo-name { font-family:'Syne',sans-serif; font-weight:800; font-size:17px; color:var(--text); }
+  .logo-tag { font-size:10px; color:var(--text3); letter-spacing:.05em; margin-top:2px; }
+  .nav { flex:1; padding:16px 10px; display:flex; flex-direction:column; gap:4px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+    cursor:pointer; color:var(--text2); font-size:13.5px; font-weight:500; transition:all .2s; border:none; background:none; width:100%; text-align:left; }
+  .nav-item:hover { background:var(--card); color:var(--text); }
+  .nav-item.active { background:var(--card2); color:var(--green); }
+  .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+  .nav-section { font-size:10px; color:var(--text3); letter-spacing:.1em; text-transform:uppercase; padding:14px 12px 6px; }
+  .sidebar-footer { padding:12px 10px 0; border-top:1px solid var(--border); }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:var(--card); }
+  .avatar { width:32px; height:32px; border-radius:50%; background:var(--green-dark); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+  .user-info { min-width:0; }
+  .user-name { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .user-role { font-size:11px; color:var(--text3); }
+
+  /* MAIN */
+  .main { margin-left:240px; min-height:100vh; }
+  .topbar { position:sticky; top:0; z-index:50; background:rgba(10,15,13,.92); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .page-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+  .topbar-right { display:flex; align-items:center; gap:12px; }
+  .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:'DM Sans',sans-serif; }
+  .btn-green { background:var(--green); color:#000; }
+  .btn-green:hover { background:var(--green-dark); }
+  .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+  .btn-outline:hover { border-color:var(--green); color:var(--green); }
+  .notif-btn { width:36px; height:36px; border-radius:8px; background:var(--card); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; position:relative; }
+  .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; background:var(--red); border-radius:50%; border:1.5px solid var(--bg2); }
+  .content { padding:24px 28px; }
+
+  /* PAGES */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* STAT CARDS */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; position:relative; overflow:hidden; transition:transform .2s; cursor:default; }
+  .stat-card:hover { transform:translateY(-2px); }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .stat-card.green::before { background:linear-gradient(90deg,var(--green),var(--emerald)); }
+  .stat-card.amber::before { background:linear-gradient(90deg,var(--amber),#f97316); }
+  .stat-card.blue::before { background:linear-gradient(90deg,var(--blue),#6366f1); }
+  .stat-card.purple::before { background:linear-gradient(90deg,var(--purple),#ec4899); }
+  .stat-label { font-size:12px; color:var(--text3); font-weight:500; letter-spacing:.03em; margin-bottom:8px; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--text); margin-bottom:4px; }
+  .stat-delta { font-size:12px; }
+  .delta-up { color:var(--green); }
+  .delta-down { color:var(--red); }
+  .stat-icon { position:absolute; right:18px; top:50%; transform:translateY(-50%); font-size:28px; opacity:.15; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+  .grid-3 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+  .card-title span { font-size:11px; color:var(--text3); font-family:'DM Sans',sans-serif; font-weight:400; }
+
+  /* MAP PLACEHOLDER */
+  .map-area { background:var(--bg3); border-radius:10px; height:280px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border); flex-direction:column; gap:10px; position:relative; overflow:hidden; }
+  .map-dots { position:absolute; inset:0; }
+  .map-dot { position:absolute; width:12px; height:12px; border-radius:50%; cursor:pointer; transition:transform .2s; }
+  .map-dot:hover { transform:scale(1.5); z-index:5; }
+  .map-dot.red { background:#ef4444; box-shadow:0 0 8px #ef4444; }
+  .map-dot.amber { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
+  .map-dot.green { background:#22c55e; box-shadow:0 0 8px #22c55e; }
+  .map-label { font-size:11px; color:var(--text3); z-index:1; }
+  .map-title-overlay { position:absolute; top:12px; left:12px; background:rgba(10,15,13,.8); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; color:var(--text2); }
+
+  /* REPORTS TABLE */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; padding:10px 12px; color:var(--text3); font-size:11px; letter-spacing:.05em; text-transform:uppercase; border-bottom:1px solid var(--border); font-weight:600; }
+  td { padding:12px 12px; border-bottom:1px solid rgba(45,74,53,.4); color:var(--text2); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(34,197,94,.04); }
+  .badge { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; gap:4px; }
+  .badge-pending { background:rgba(245,158,11,.15); color:var(--amber); }
+  .badge-progress { background:rgba(59,130,246,.15); color:var(--blue); }
+  .badge-done { background:rgba(34,197,94,.15); color:var(--green); }
+  .badge-urgent { background:rgba(239,68,68,.15); color:var(--red); }
+  .priority-dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:4px; }
+
+  /* CHART BAR */
+  .bar-chart { display:flex; gap:8px; align-items:flex-end; height:120px; padding-top:8px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .bar { width:100%; border-radius:4px 4px 0 0; background:var(--green); transition:height .4s ease; min-height:4px; }
+  .bar-label { font-size:10px; color:var(--text3); }
+
+  /* DONUT */
+  .donut-wrap { display:flex; align-items:center; gap:20px; }
+  .donut-svg { flex-shrink:0; }
+  .legend { display:flex; flex-direction:column; gap:8px; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+  .legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+  /* REPORT FORM */
+  .form-group { margin-bottom:16px; }
+  .form-label { font-size:12px; color:var(--text3); font-weight:600; letter-spacing:.03em; margin-bottom:6px; display:block; }
+  .form-input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-size:13.5px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s; }
+  .form-input:focus { border-color:var(--green); }
+  .form-input::placeholder { color:var(--text3); }
+  textarea.form-input { resize:vertical; min-height:80px; }
+  select.form-input { cursor:pointer; }
+  .upload-area { border:2px dashed var(--border); border-radius:10px; padding:24px; text-align:center; cursor:pointer; transition:all .2s; }
+  .upload-area:hover { border-color:var(--green); background:rgba(34,197,94,.04); }
+  .upload-icon { font-size:28px; margin-bottom:8px; }
+  .upload-text { font-size:13px; color:var(--text3); }
+  .upload-sub { font-size:11px; color:var(--text3); opacity:.6; margin-top:4px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .security-note { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:8px; padding:10px 14px; font-size:12px; color:var(--green-light); display:flex; align-items:center; gap:8px; margin-top:8px; }
+
+  /* COLLECTOR CARDS */
+  .collector-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .collector-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .collector-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .collector-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--green-dark),var(--teal)); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; }
+  .collector-name { font-weight:600; font-size:14px; }
+  .collector-id { font-size:11px; color:var(--text3); }
+  .collector-stats { display:flex; gap:12px; }
+  .c-stat { text-align:center; }
+  .c-stat-val { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--text); }
+  .c-stat-lbl { font-size:10px; color:var(--text3); }
+  .status-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 8px; border-radius:20px; }
+  .status-active { background:rgba(34,197,94,.15); color:var(--green); }
+  .status-busy { background:rgba(245,158,11,.15); color:var(--amber); }
+  .status-offline { background:rgba(107,148,118,.1); color:var(--text3); }
+  .progress-bar { background:var(--bg2); border-radius:999px; height:5px; overflow:hidden; margin-top:8px; }
+  .progress-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--green),var(--emerald)); }
+
+  /* RECYCLING */
+  .recycle-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .recycle-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+  .recycle-icon { font-size:24px; margin-bottom:8px; }
+  .recycle-name { font-size:12px; color:var(--text3); margin-bottom:4px; }
+  .recycle-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text); }
+  .recycle-rev { font-size:11px; color:var(--green); margin-top:2px; }
+
+  /* AI CHATBOT */
+  .chat-container { display:flex; flex-direction:column; height:520px; }
+  .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .msg { max-width:75%; display:flex; flex-direction:column; gap:4px; }
+  .msg.bot { align-self:flex-start; }
+  .msg.user { align-self:flex-end; }
+  .msg-bubble { padding:10px 14px; border-radius:14px; font-size:13.5px; line-height:1.5; }
+  .msg.bot .msg-bubble { background:var(--card2); color:var(--text); border-bottom-left-radius:4px; }
+  .msg.user .msg-bubble { background:var(--green); color:#000; font-weight:500; border-bottom-right-radius:4px; }
+  .msg-time { font-size:10px; color:var(--text3); }
+  .msg.user .msg-time { text-align:right; }
+  .chat-input-area { border-top:1px solid var(--border); padding:14px 16px; display:flex; gap:10px; align-items:flex-end; }
+  .chat-input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:10px 14px; color:var(--text); font-size:13.5px; font-family:'DM Sans',sans-serif; outline:none; resize:none; max-height:100px; transition:border-color .2s; }
+  .chat-input:focus { border-color:var(--green); }
+  .send-btn { width:38px; height:38px; background:var(--green); border:none; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all .2s; flex-shrink:0; }
+  .send-btn:hover { background:var(--green-dark); }
+  .bot-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--green),var(--teal)); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; margin-top:2px; }
+  .msg-row { display:flex; gap:8px; align-items:flex-start; }
+  .msg-row.user { flex-direction:row-reverse; }
+  .typing-indicator .msg-bubble { display:flex; gap:4px; align-items:center; padding:12px 14px; }
+  .typing-dot { width:6px; height:6px; border-radius:50%; background:var(--text3); animation:typing 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay:.2s; }
+  .typing-dot:nth-child(3) { animation-delay:.4s; }
+  @keyframes typing { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-4px); } }
+  .quick-replies { display:flex; flex-wrap:wrap; gap:6px; padding:0 16px 10px; }
+  .quick-reply { background:var(--card2); border:1px solid var(--border); border-radius:20px; padding:5px 12px; font-size:12px; color:var(--text2); cursor:pointer; transition:all .2s; }
+  .quick-reply:hover { border-color:var(--green); color:var(--green); }
+
+  /* ALERT BANNER */
+  .alert { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:12px; margin-bottom:16px; font-size:13px; color:#fca5a5; }
+
+  /* LEADERBOARD */
+  .leaderboard-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(45,74,53,.4); }
+  .leaderboard-item:last-child { border-bottom:none; }
+  .rank { font-family:'Syne',sans-serif; font-weight:800; font-size:16px; color:var(--text3); width:28px; text-align:center; }
+  .rank.gold { color:#f59e0b; }
+  .rank.silver { color:#9ca3af; }
+  .rank.bronze { color:#b45309; }
+  .lb-name { flex:1; font-weight:500; font-size:13.5px; }
+  .lb-pts { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--green); }
+  .lb-badge { font-size:16px; }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .page.active { animation:fadeIn .3s ease; }
+  .pulse { animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div class="logo-name">CivicSense</div>
+    <div class="logo-tag">Civic Awareness Platform</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span>Dashboard</button>
+    <button class="nav-item" onclick="showPage('report',this)"><span class="icon">📍</span>Report Issue</button>
+    <button class="nav-item" onclick="showPage('map',this)"><span class="icon">🗺️</span>Live Map</button>
+    <div class="nav-section">Operations</div>
+    <button class="nav-item" onclick="showPage('collectors',this)"><span class="icon">🚛</span>Collectors</button>
+    <button class="nav-item" onclick="showPage('recycle',this)"><span class="icon">♻️</span>Recycling Hub</button>
+    <button class="nav-item" onclick="showPage('awareness',this)"><span class="icon">📚</span>Awareness</button>
+    <div class="nav-section">Support</div>
+    <button class="nav-item" onclick="showPage('chatbot',this)"><span class="icon">🤖</span>AI Assistant</button>
+    <button class="nav-item" onclick="showPage('security',this)"><span class="icon">🔒</span>Security</button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar">RK</div>
+      <div class="user-info">
+        <div class="user-name">Raj Kumar</div>
+        <div class="user-role">Citizen · Ward 12</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard Overview</div>
+    <div class="topbar-right">
+      <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+      <button class="btn btn-green" onclick="showPage('report', document.querySelector('.nav-item:nth-child(4)'))">+ Report Garbage</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="alert">⚠️ <strong>3 Critical Reports</strong> pending in Ward 5 & Ward 12 — Garbage collector dispatched. ETA: 45 mins.</div>
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Total Reports Today</div>
+          <div class="stat-value">1,247</div>
+          <div class="stat-delta delta-up">↑ 18% from yesterday</div>
+          <div class="stat-icon">📍</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Pending Cleanups</div>
+          <div class="stat-value">342</div>
+          <div class="stat-delta delta-down">↓ 12% this week</div>
+          <div class="stat-icon">⏳</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Resolved This Month</div>
+          <div class="stat-value">8,914</div>
+          <div class="stat-delta delta-up">↑ 34% vs last month</div>
+          <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Recycling Revenue</div>
+          <div class="stat-value">₹2.4L</div>
+          <div class="stat-delta delta-up">↑ 22% this month</div>
+          <div class="stat-icon">♻️</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Weekly Cleanup Activity <span>Reports Resolved</span></div>
+          <div class="bar-chart" id="bar-chart"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;justify-content:space-around;">
+            <span style="font-size:10px;color:var(--text3)">Mon</span><span style="font-size:10px;color:var(--text3)">Tue</span>
+            <span style="font-size:10px;color:var(--text3)">Wed</span><span style="font-size:10px;color:var(--text3)">Thu</span>
+            <span style="font-size:10px;color:var(--text3)">Fri</span><span style="font-size:10px;color:var(--text3)">Sat</span>
+            <span style="font-size:10px;color:var(--text3)">Sun</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Issue Types <span>This Week</span></div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="30" fill="none" stroke="#1f3326" stroke-width="14"/>
+              <circle cx="45" cy="45" r="30" fill="none" stroke="#22c55e" stroke-width="14" stroke-dasharray="94 94" stroke-dashoffset="0" transform="rotate(-90 45 45)"/>
+              <circle cx="45" cy="45" r="30" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="47 141" stroke-dashoffset="-94" transform="rotate(-90 45 45)"/>
+              <circle cx="45" cy="45" r="30" fill="none" stroke="#3b82f6" stroke-width="14" stroke-dasharray="28 160" stroke-dashoffset="-141" transform="rotate(-90 45 45)"/>
+              <circle cx="45" cy="45" r="30" fill="none" stroke="#a855f7" stroke-width="14" stroke-dasharray="19 169" stroke-dashoffset="-169" transform="rotate(-90 45 45)"/>
+            </svg>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Household Waste 50%</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Dumping Sites 25%</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Roadside 15%</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Drain Clog 10%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Recent Reports <span>Latest 5</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Location</th><th>Type</th><th>Priority</th><th>Status</th><th>Time</th></tr></thead>
+              <tbody>
+                <tr><td>Sector 14, Ward 5</td><td>Dumping</td><td><span class="priority-dot" style="background:#ef4444"></span>High</td><td><span class="badge badge-urgent">🔴 Urgent</span></td><td>5m ago</td></tr>
+                <tr><td>MG Road, Ward 3</td><td>Overflow Bin</td><td><span class="priority-dot" style="background:#f59e0b"></span>Med</td><td><span class="badge badge-progress">🔵 In Progress</span></td><td>22m ago</td></tr>
+                <tr><td>Green Park</td><td>Household</td><td><span class="priority-dot" style="background:#22c55e"></span>Low</td><td><span class="badge badge-done">✅ Resolved</span></td><td>1h ago</td></tr>
+                <tr><td>Bus Stand, Ward 12</td><td>Roadside</td><td><span class="priority-dot" style="background:#f59e0b"></span>Med</td><td><span class="badge badge-pending">⏳ Pending</span></td><td>2h ago</td></tr>
+                <tr><td>Market Lane 7</td><td>Drain Clog</td><td><span class="priority-dot" style="background:#ef4444"></span>High</td><td><span class="badge badge-progress">🔵 In Progress</span></td><td>3h ago</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Citizens <span>by Reports this Month</span></div>
+          <div id="leaderboard">
+            <div class="leaderboard-item"><div class="rank gold">1</div><div class="avatar" style="width:28px;height:28px;font-size:11px">AM</div><div class="lb-name">Amit Mehta</div><div class="lb-pts">342 pts</div><div class="lb-badge">🥇</div></div>
+            <div class="leaderboard-item"><div class="rank silver">2</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:var(--teal)">PS</div><div class="lb-name">Priya Sharma</div><div class="lb-pts">289 pts</div><div class="lb-badge">🥈</div></div>
+            <div class="leaderboard-item"><div class="rank bronze">3</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#a855f7">RK</div><div class="lb-name">Raj Kumar</div><div class="lb-pts">214 pts</div><div class="lb-badge">🥉</div></div>
+            <div class="leaderboard-item"><div class="rank">4</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#3b82f6">NK</div><div class="lb-name">Neha Kapoor</div><div class="lb-pts">198 pts</div><div class="lb-badge">⭐</div></div>
+            <div class="leaderboard-item"><div class="rank">5</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#f59e0b;color:#000">VG</div><div class="lb-name">Vivek Gupta</div><div class="lb-pts">167 pts</div><div class="lb-badge">⭐</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT ISSUE PAGE -->
+    <div class="page" id="page-report">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📍 Report a Garbage Issue</div>
+          <div class="form-group">
+            <label class="form-label">Issue Type *</label>
+            <select class="form-input">
+              <option value="">Select issue type...</option>
+              <option>Household Waste Dumping</option>
+              <option>Roadside Garbage</option>
+              <option>Overflow Dustbin</option>
+              <option>Illegal Dumping Site</option>
+              <option>Drain/Sewer Clog</option>
+              <option>Construction Debris</option>
+              <option>Medical/Hazardous Waste</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Severity Level *</label>
+              <select class="form-input">
+                <option>Low – Minor litter</option>
+                <option>Medium – Overflowing</option>
+                <option>High – Health hazard</option>
+                <option>Critical – Emergency</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ward Number *</label>
+              <select class="form-input">
+                <option>Ward 1</option><option>Ward 2</option><option>Ward 3</option>
+                <option>Ward 5</option><option selected>Ward 12</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Location / Address *</label>
+            <input class="form-input" placeholder="e.g. Near Bus Stand, Sector 14, Ward 12" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Coordinates (Auto-detected)</label>
+            <input class="form-input" value="28.6139° N, 77.2090° E" readonly style="opacity:.6" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" placeholder="Describe the issue briefly — amount, type, urgency..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Upload Photo (Required for verification)</label>
+            <div class="upload-area" onclick="this.style.borderColor='var(--green)'">
+              <div class="upload-icon">📸</div>
+              <div class="upload-text">Tap to capture or upload photo</div>
+              <div class="upload-sub">JPG, PNG — Max 5MB. Your photo is reviewed before publishing.</div>
+            </div>
+          </div>
+          <div class="security-note">🔒 Your location & identity are encrypted. Photos are reviewed to prevent misuse before submission.</div>
+          <br>
+          <button class="btn btn-green" style="width:100%;padding:12px" onclick="submitReport()">Submit Report</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Your Recent Reports</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Report</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody>
+                <tr><td>Overflow Bin – Ward 12</td><td><span class="badge badge-done">✅ Resolved</span></td><td>Apr 17</td></tr>
+                <tr><td>Roadside – MG Road</td><td><span class="badge badge-progress">🔵 In Progress</span></td><td>Apr 18</td></tr>
+                <tr><td>Dumping – Sector 14</td><td><span class="badge badge-pending">⏳ Pending</span></td><td>Apr 19</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <div class="card-title">🏅 Your Civic Score</div>
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;text-align:center">
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:800;color:var(--green)">214</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Civic Points — Bronze Citizen</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:42%"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">286 points to Silver 🥈</div>
+          </div>
+          <br>
+          <div class="card-title">ℹ️ Reporting Guidelines</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text2)">
+            <div style="display:flex;gap:8px"><span>✅</span> Only report genuine waste issues in your area</div>
+            <div style="display:flex;gap:8px"><span>✅</span> Include a clear photo — blurry images are rejected</div>
+            <div style="display:flex;gap:8px"><span>✅</span> False reports result in point deduction & account review</div>
+            <div style="display:flex;gap:8px"><span>✅</span> Repeat reports of same location auto-escalate priority</div>
+            <div style="display:flex;gap:8px"><span>🔒</span> All reports verified by AI + moderator before dispatch</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP PAGE -->
+    <div class="page" id="page-map">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🗺️ Live Garbage Report Map — Ward Overview</div>
+        <div class="map-area">
+          <div class="map-title-overlay">📍 Real-time — 1,247 active pins</div>
+          <div class="map-dots" id="map-dots"></div>
+          <div style="font-size:40px;opacity:.07;z-index:0">🗺️</div>
+          <div class="map-label" style="z-index:1">Interactive map — hover pins to see details</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text3)">
+          <span>🔴 High Priority (124)</span>
+          <span>🟡 Medium Priority (389)</span>
+          <span>🟢 Resolved (734)</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--green)">● Live updating every 60s</span>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Ward-wise Hotspots</div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Ward</th><th>Reports</th><th>Status</th><th>Collector</th></tr></thead>
+              <tbody>
+                <tr><td>Ward 5</td><td>89</td><td><span class="badge badge-urgent">Critical</span></td><td>Team A</td></tr>
+                <tr><td>Ward 12</td><td>67</td><td><span class="badge badge-progress">Active</span></td><td>Team C</td></tr>
+                <tr><td>Ward 3</td><td>43</td><td><span class="badge badge-pending">Queued</span></td><td>Team B</td></tr>
+                <tr><td>Ward 7</td><td>28</td><td><span class="badge badge-done">Clear</span></td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Collector Routes Today</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg3);border-radius:8px">
+              <span>🚛 Team A</span><span style="color:var(--green)">En Route → Ward 5</span><span>ETA 12 min</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg3);border-radius:8px">
+              <span>🚛 Team B</span><span style="color:var(--amber)">Collecting → Ward 3</span><span>On site</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg3);border-radius:8px">
+              <span>🚛 Team C</span><span style="color:var(--blue)">Ward 12 → Recycle Hub</span><span>30 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLECTORS PAGE -->
+    <div class="page" id="page-collectors">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card green"><div class="stat-label">Active Collectors</div><div class="stat-value">18</div><div class="stat-delta delta-up">of 24 total</div></div>
+        <div class="stat-card amber"><div class="stat-label">Trips Today</div><div class="stat-value">47</div><div class="stat-delta delta-up">↑ 8 vs yesterday</div></div>
+        <div class="stat-card blue"><div class="stat-label">Waste Collected</div><div class="stat-value">12.4T</div><div class="stat-delta delta-up">tonnes today</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚛 Collector Fleet Status</div>
+        <div class="collector-grid">
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar">A</div><div><div class="collector-name">Team Alpha</div><div class="collector-id">GC-001 · Ward 5 & 6</div></div><span class="status-badge status-active">● Active</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">14</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">3.2T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">96%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div></div>
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">B</div><div><div class="collector-name">Team Bravo</div><div class="collector-id">GC-002 · Ward 3 & 4</div></div><span class="status-badge status-busy">● On Site</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">11</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">2.8T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">92%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div></div>
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar" style="background:linear-gradient(135deg,#a855f7,#ec4899)">C</div><div><div class="collector-name">Team Charlie</div><div class="collector-id">GC-003 · Ward 12</div></div><span class="status-badge status-active">● Active</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">9</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">2.1T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">89%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div></div>
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">D</div><div><div class="collector-name">Team Delta</div><div class="collector-id">GC-004 · Ward 8 & 9</div></div><span class="status-badge status-offline">● Standby</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">7</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">1.9T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">85%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:43%"></div></div></div>
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar" style="background:linear-gradient(135deg,#10b981,#0d9488)">E</div><div><div class="collector-name">Team Echo</div><div class="collector-id">GC-005 · Ward 1 & 2</div></div><span class="status-badge status-active">● Active</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">12</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">2.4T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">94%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div></div>
+          <div class="collector-card"><div class="collector-header"><div class="collector-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">F</div><div><div class="collector-name">Team Foxtrot</div><div class="collector-id">GC-006 · Ward 10 & 11</div></div><span class="status-badge status-busy">● Collecting</span></div><div class="collector-stats"><div class="c-stat"><div class="c-stat-val">8</div><div class="c-stat-lbl">Trips</div></div><div class="c-stat"><div class="c-stat-val">2.0T</div><div class="c-stat-lbl">Collected</div></div><div class="c-stat"><div class="c-stat-val">91%</div><div class="c-stat-lbl">On-time</div></div></div><div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECYCLING PAGE -->
+    <div class="page" id="page-recycle">
+      <div class="recycle-grid">
+        <div class="recycle-card"><div class="recycle-icon">📦</div><div class="recycle-name">Plastic (PET/HDPE)</div><div class="recycle-val">4.2T</div><div class="recycle-rev">₹58,800 earned</div></div>
+        <div class="recycle-card"><div class="recycle-icon">📰</div><div class="recycle-name">Paper & Cardboard</div><div class="recycle-val">3.1T</div><div class="recycle-rev">₹21,700 earned</div></div>
+        <div class="recycle-card"><div class="recycle-icon">🔩</div><div class="recycle-name">Metal & Scrap</div><div class="recycle-val">1.8T</div><div class="recycle-rev">₹72,000 earned</div></div>
+        <div class="recycle-card"><div class="recycle-icon">🍶</div><div class="recycle-name">Glass</div><div class="recycle-val">0.9T</div><div class="recycle-rev">₹9,000 earned</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">♻️ Recycling Pipeline</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:var(--bg3);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Collection → Sorting Hub</span><span class="badge badge-progress">In Progress</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:68%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px">4.8 tonnes being sorted today</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Sorting → Processing Plant</span><span class="badge badge-done">Dispatched</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px">2.1 tonnes delivered to Eco Industries Pvt. Ltd.</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Processing → Sold to Manufacturers</span><span class="badge badge-done">Completed</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px">Revenue: ₹1,61,500 this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏭 Partner Industries</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><div><div style="font-size:13px;font-weight:600">Eco Industries Pvt. Ltd.</div><div style="font-size:11px;color:var(--text3)">Plastic recycling · 4 orders</div></div><span style="color:var(--green);font-size:12px">Active ✓</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><div><div style="font-size:13px;font-weight:600">GreenSteel Corp</div><div style="font-size:11px;color:var(--text3)">Metal scrap · 2 orders</div></div><span style="color:var(--green);font-size:12px">Active ✓</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><div><div style="font-size:13px;font-weight:600">PaperMill India</div><div style="font-size:11px;color:var(--text3)">Cardboard/Paper · 3 orders</div></div><span style="color:var(--amber);font-size:12px">Pending</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><div><div style="font-size:13px;font-weight:600">ClearGlass Mfg.</div><div style="font-size:11px;color:var(--text3)">Glass recycling · 1 order</div></div><span style="color:var(--green);font-size:12px">Active ✓</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AWARENESS PAGE -->
+    <div class="page" id="page-awareness">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📚 Civic Awareness Content</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;border-left:3px solid var(--green)"><div style="font-size:14px;font-weight:600;margin-bottom:4px">🗑️ Why Segregating Waste Matters</div><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Learn how separating wet, dry and hazardous waste at source reduces landfill burden by 70%.</div><span class="badge badge-done">Tip of the Day</span></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;border-left:3px solid var(--blue)"><div style="font-size:14px;font-weight:600;margin-bottom:4px">💧 Plastic in Waterways</div><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Understand how single-use plastic dumped on roads enters drains and contaminates water supply.</div><span class="badge badge-progress">Article</span></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;border-left:3px solid var(--amber)"><div style="font-size:14px;font-weight:600;margin-bottom:4px">🌱 Composting at Home</div><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Turn your kitchen waste into compost in 4 easy steps. Reduce household garbage by up to 40%.</div><span class="badge badge-pending">Video Guide</span></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;border-left:3px solid var(--purple)"><div style="font-size:14px;font-weight:600;margin-bottom:4px">⚖️ Fine & Penalty Awareness</div><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Know your civic duties — fines up to ₹5,000 for illegal dumping under Swachh Bharat guidelines.</div><span class="badge" style="background:rgba(168,85,247,.15);color:var(--purple)">Important</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🎓 Civic Certification Program</div>
+          <div style="text-align:center;padding:20px 0">
+            <div style="font-size:48px;margin-bottom:8px">🏅</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px">Earn Your Civic Badge</div>
+            <div style="font-size:13px;color:var(--text3);margin-bottom:20px">Complete awareness modules to earn government-recognized certificates</div>
+            <div style="display:flex;flex-direction:column;gap:8px;text-align:left">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:18px">✅</span><div><div style="font-size:13px;font-weight:500">Module 1: Waste Segregation Basics</div><div style="font-size:11px;color:var(--green)">Completed · +50 pts</div></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:18px">🔵</span><div><div style="font-size:13px;font-weight:500">Module 2: Plastic-Free Living</div><div style="font-size:11px;color:var(--blue)">In Progress · 60% done</div></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px;opacity:.5"><span style="font-size:18px">🔒</span><div><div style="font-size:13px;font-weight:500">Module 3: Community Leadership</div><div style="font-size:11px;color:var(--text3)">Locked — Complete Module 2</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI CHATBOT PAGE -->
+    <div class="page" id="page-chatbot">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:20px">🤖</div>
+          <div><div style="font-family:'Syne',sans-serif;font-weight:700">CivicBot AI</div><div style="font-size:12px;color:var(--green)">● Online — Powered by Claude</div></div>
+          <div style="margin-left:auto;font-size:12px;color:var(--text3)">Secure · Encrypted · 24/7</div>
+        </div>
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg-row bot">
+              <div class="bot-avatar">🤖</div>
+              <div class="msg bot"><div class="msg-bubble">👋 Hello! I'm CivicBot, your AI assistant for the CivicSense platform. I can help you with reporting garbage, understanding civic duties, tracking complaints, learning about recycling, and more. How can I assist you today?</div><div class="msg-time">Just now</div></div>
+            </div>
+          </div>
+          <div class="quick-replies" id="quick-replies">
+            <div class="quick-reply" onclick="sendQuick('How do I report garbage?')">How do I report garbage?</div>
+            <div class="quick-reply" onclick="sendQuick('What happens after I report?')">What happens after I report?</div>
+            <div class="quick-reply" onclick="sendQuick('How does recycling work?')">How does recycling work?</div>
+            <div class="quick-reply" onclick="sendQuick('What are civic points?')">What are civic points?</div>
+            <div class="quick-reply" onclick="sendQuick('Is my data secure?')">Is my data secure?</div>
+          </div>
+          <div class="chat-input-area">
+            <textarea class="chat-input" id="chat-input" placeholder="Ask me anything about civic services..." rows="1" onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY PAGE -->
+    <div class="page" id="page-security">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🔒 Platform Security Overview</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">🔐</span><div><div style="font-size:13px;font-weight:600">End-to-End Encryption</div><div style="font-size:11px;color:var(--text3)">AES-256 for all data in transit & at rest</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">👁️</span><div><div style="font-size:13px;font-weight:600">AI Photo Verification</div><div style="font-size:11px;color:var(--text3)">Reports reviewed by AI before publishing</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">🛡️</span><div><div style="font-size:13px;font-weight:600">Aadhaar / Gov ID Verification</div><div style="font-size:11px;color:var(--text3)">One account per citizen — prevents fake accounts</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">🚫</span><div><div style="font-size:13px;font-weight:600">False Report Detection</div><div style="font-size:11px;color:var(--text3)">ML model flags suspicious or repeat false reports</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">📋</span><div><div style="font-size:13px;font-weight:600">Audit Log Trail</div><div style="font-size:11px;color:var(--text3)">Every action logged with timestamp & user ID</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:8px"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">🔑</span><div><div style="font-size:13px;font-weight:600">Role-Based Access Control</div><div style="font-size:11px;color:var(--text3)">Citizens, Collectors, Municipal, Admin tiers</div></div></div><span style="color:var(--green);font-size:12px;font-weight:600">Active</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 User Roles & Permissions</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Role</th><th>Capabilities</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Citizen</strong></td><td>Report garbage, view own history, earn points, access awareness content</td></tr>
+                <tr><td><strong>Collector</strong></td><td>View assigned reports, update status, mark resolved, log collections</td></tr>
+                <tr><td><strong>Municipal Officer</strong></td><td>View all ward data, manage collectors, escalate issues, generate reports</td></tr>
+                <tr><td><strong>Admin</strong></td><td>Full system access, user management, security settings, data export</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <div class="card-title">📊 Security Events (Last 24h)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;color:var(--text2)"><span>🟢 Successful logins</span><span>1,247</span></div>
+            <div style="display:flex;justify-content:space-between;color:var(--amber)"><span>🟡 Suspicious logins blocked</span><span>3</span></div>
+            <div style="display:flex;justify-content:space-between;color:var(--red)"><span>🔴 False reports flagged</span><span>7</span></div>
+            <div style="display:flex;justify-content:space-between;color:var(--text2)"><span>🔵 AI photo rejections</span><span>14</span></div>
+            <div style="display:flex;justify-content:space-between;color:var(--green)"><span>✅ Reports verified & dispatched</span><span>342</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// NAV
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = { dashboard:'Dashboard Overview', report:'Report a Garbage Issue', map:'Live Garbage Map', collectors:'Collector Fleet', recycle:'Recycling Hub', awareness:'Civic Awareness', chatbot:'AI CivicBot Assistant', security:'Platform Security' };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  if (id === 'map') initMap();
+}
+
+// BAR CHART
+const vals = [78, 92, 65, 88, 71, 96, 84];
+const maxV = Math.max(...vals);
+const bc = document.getElementById('bar-chart');
+if (bc) vals.forEach(v => { const col = document.createElement('div'); col.className = 'bar-col'; const bar = document.createElement('div'); bar.className = 'bar'; bar.style.height = (v / maxV * 100) + 'px'; bar.style.opacity = 0.5 + (v/maxV)*0.5; col.appendChild(bar); bc.appendChild(col); });
+
+// MAP DOTS
+function initMap() {
+  const md = document.getElementById('map-dots');
+  if (!md || md.children.length > 0) return;
+  const dots = [{x:15,y:20,c:'red'},{x:30,y:55,c:'amber'},{x:45,y:30,c:'red'},{x:60,y:70,c:'green'},{x:75,y:45,c:'amber'},{x:85,y:25,c:'green'},{x:20,y:75,c:'green'},{x:55,y:55,c:'red'},{x:40,y:80,c:'amber'},{x:70,y:15,c:'green'},{x:25,y:40,c:'amber'},{x:80,y:60,c:'red'},{x:50,y:10,c:'green'},{x:10,y:55,c:'amber'},{x:65,y:40,c:'green'}];
+  dots.forEach(d => { const dot = document.createElement('div'); dot.className = `map-dot ${d.c}`; dot.style.left = d.x + '%'; dot.style.top = d.y + '%'; dot.title = `${d.c === 'red' ? 'High Priority' : d.c === 'amber' ? 'Medium Priority' : 'Resolved'} Report`; md.appendChild(dot); });
+}
+
+// CHATBOT
+const botResponses = {
+  'how do i report garbage': "To report garbage:\n1️⃣ Go to 'Report Issue' in the sidebar\n2️⃣ Select the issue type and severity\n3️⃣ Your GPS location is auto-detected\n4️⃣ Upload a photo of the garbage\n5️⃣ Submit — a collector is dispatched!\n\nYou earn Civic Points for every valid report. 🏅",
+  'what happens after i report': "After you submit a report:\n📋 AI reviews your photo for validity\n✅ Verified reports get a tracking ID\n🚛 Nearest available collector is assigned\n📍 You receive live location updates\n✅ You're notified when the issue is resolved!\n\nAverage resolution time is 2–4 hours.",
+  'how does recycling work': "Our recycling pipeline:\n🚛 Collectors separate recyclable waste on pickup\n📦 Sorted into: Plastic, Paper, Metal, Glass\n🏭 Dispatched to partner manufacturing industries\n💰 Revenue goes back to municipal fund\n\nThis month we earned ₹2.4 Lakhs from recycling! ♻️",
+  'what are civic points': "Civic Points reward good citizenship!\n\n⭐ +10 pts — Submit a valid report\n⭐ +25 pts — Complete an awareness module\n⭐ +5 pts — Confirm resolution is satisfactory\n\nLevels: Bronze (0-300) → Silver (300-700) → Gold (700+)\n\nTop earners get featured on the leaderboard! 🏆",
+  'is my data secure': "Your data is fully protected:\n🔐 AES-256 encryption for all data\n🛡️ Aadhaar verification — one account per citizen\n👁️ AI reviews all photos before publishing\n🚫 Location shared only with assigned collectors\n📋 Full audit logs for every action\n\nWe never sell or share your personal data. Your privacy is our priority! 🔒",
+};
+
+function getBotReply(msg) {
+  const lower = msg.toLowerCase();
+  for (const [key, val] of Object.entries(botResponses)) { if (lower.includes(key.split(' ')[0]) || lower === key) return val; }
+  if (lower.includes('garbage') || lower.includes('trash') || lower.includes('waste')) return "For waste-related issues, you can:\n📍 Report via 'Report Issue' tab\n🗺️ View live reports on the map\n♻️ Learn recycling tips in Awareness\n\nWould you like step-by-step reporting help?";
+  if (lower.includes('collector') || lower.includes('pickup')) return "Garbage collectors are assigned based on:\n📍 Proximity to report location\n⚡ Current workload and availability\n🔴 Priority (critical reports dispatched first)\n\nYou can track your assigned collector on the Live Map!";
+  if (lower.includes('point') || lower.includes('reward')) return "Earn points and get recognized!\n\n🏅 Bronze Citizen: 0–300 points\n🥈 Silver Citizen: 300–700 points\n🥇 Gold Citizen: 700+ points\n\nGold citizens receive priority support and government appreciation certificates!";
+  return "Thanks for your question! I'm here to help with:\n📍 Reporting garbage issues\n🗺️ Tracking report status\n♻️ Recycling information\n📚 Civic awareness topics\n🔒 Platform security queries\n\nCould you rephrase or pick a quick reply below?";
+}
+
+function addMsg(text, sender) {
+  const cm = document.getElementById('chat-messages');
+  const row = document.createElement('div');
+  row.className = `msg-row ${sender}`;
+  if (sender === 'bot') {
+    row.innerHTML = `<div class="bot-avatar">🤖</div><div class="msg bot"><div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div><div class="msg-time">Just now</div></div>`;
+  } else {
+    row.innerHTML = `<div class="msg user"><div class="msg-bubble">${text}</div><div class="msg-time">You</div></div>`;
+  }
+  cm.appendChild(row);
+  cm.scrollTop = cm.scrollHeight;
+}
+
+function showTyping() {
+  const cm = document.getElementById('chat-messages');
+  const t = document.createElement('div'); t.className = 'msg-row bot'; t.id = 'typing';
+  t.innerHTML = `<div class="bot-avatar">🤖</div><div class="msg bot typing-indicator"><div class="msg-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  cm.appendChild(t); cm.scrollTop = cm.scrollHeight;
+}
+
+function sendMessage() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  addMsg(msg, 'user');
+  document.getElementById('quick-replies').style.display = 'none';
+  showTyping();
+  setTimeout(() => {
+    const t = document.getElementById('typing'); if (t) t.remove();
+    addMsg(getBotReply(msg), 'bot');
+  }, 900 + Math.random()*600);
+}
+
+function sendQuick(msg) { document.getElementById('chat-input').value = msg; sendMessage(); }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+// REPORT SUBMIT
+function submitReport() {
+  alert('✅ Report submitted successfully!\n\nYour report ID: #CS-2024-1248\nA garbage collector has been notified.\nEstimated pickup: within 2 hours.\n\n+10 Civic Points earned! 🏅');
+}
+</script>
+</body>
+</html>
